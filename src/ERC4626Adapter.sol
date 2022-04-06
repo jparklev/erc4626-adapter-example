@@ -6,7 +6,15 @@ import { SafeTransferLib } from "solmate/utils/SafeTransferLib.sol";
 import { BaseAdapter } from "sense-v1-core/adapters/BaseAdapter.sol";
 import { ERC4626 } from "@rari-capital/solmate/src/mixins/ERC4626.sol";
 
-/// @notice Adapter contract for tokenized vaults implementing ERC4626
+interface PriceOracleLike {
+    /// @notice Get the price of an underlying asset.
+    /// @param underlying The underlying asset to get the price of.
+    /// @return The underlying asset price in ETH as a mantissa (scaled by 1e18).
+    /// Zero means the price is unavailable.
+    function price(address underlying) external view returns (uint256);
+}
+
+/// @notice Adapter contract for cTokens
 contract ERC4626Adapter is BaseAdapter {
     using SafeTransferLib for ERC20;
 
@@ -46,5 +54,23 @@ contract ERC4626Adapter is BaseAdapter {
 
     function scale() external override returns (uint256) {
         return ERC4626(target).convertToAssets(BASE_UINT);
+    }
+
+    function scaleStored() external view override returns (uint256) {
+        return ERC4626(target).convertToAssets(BASE_UINT);
+    }
+
+    function getUnderlyingPrice() external view override returns (uint256) {
+        return PriceOracleLike(oracle).price(underlying);
+    }
+
+    function wrapUnderlying(uint256 assets) external override returns (uint256 _shares) {
+        ERC20(underlying).safeTransferFrom(msg.sender, address(this), assets);
+        _shares = ERC4626(target).deposit(assets, msg.sender);
+    }
+
+    function unwrapTarget(uint256 shares) external override returns (uint256 _assets) {
+        ERC20(target).safeTransferFrom(msg.sender, address(this), shares);
+        _assets = ERC4626(target).redeem(shares, msg.sender, address(this));
     }
 }
