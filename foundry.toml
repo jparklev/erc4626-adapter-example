@@ -2,5 +2,10 @@
 src = 'src'
 out = 'out'
 libs = ['lib']
-
-# See more config options https://github.com/gakonst/foundry/tree/master/config
+remappings = [
+    'ds-test/=lib/ds-test/src/',
+    'sense-v1-core/=lib/sense-v1/pkg/core/src/',
+    '@rari-capital/=lib/sense-v1/node_modules/@rari-capital/',
+    '@openzeppelin/contracts=lib/sense-v1/node_modules/@openzeppelin/contracts',
+    '@sense-finance/=lib/sense-v1/node_modules/@sense-finance/'
+]
